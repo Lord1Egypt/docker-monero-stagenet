@@ -96,6 +96,7 @@ This is a stagenet conversion of [lalanza808/docker-monero-node](https://github.
 - All ports moved to the stagenet scheme above, in the daemon, the compose files, the Tor hidden services and the tools.
 - **Fix:** nodemapper crashed (`KeyError: 'white_list'`) on a fresh node with no confirmed peers yet, so Prometheus showed it down.
 - **Fix:** the exporter now always reaches the daemon on its container port. Before, changing `UNRESTRICTED_PORT` silently broke metrics.
+- **Fix:** the Grafana peer map showed "API KEY REQUIRED" tiles because CARTO basemaps now need a key; the default map is OpenStreetMap (no key).
 - Images published as multi-arch `lord1egypt/monero-stagenet-*`; containers prefixed `stagenet_` so a mainnet stack can run next to it.
 
 ## 🙏 Credits and license
