@@ -10,7 +10,7 @@ PLATFORMS=linux/amd64,linux/arm64
 MONERO_VERSION=v0.18.5.4            # must match dockerfiles/files/monerod/hashes.txt (GPG-verified at build time)
 MONERO_IMAGE_REV=1                   # bump when the image changes but Monero does not (published tags are never overwritten)
 VERSION=1.0.0
-EXPLORER_UPSTREAM=lalanza808/moneroexplorer:v1.0.0
+EXPLORER_VERSION=2.0.0              # ThothOS explorer (1.0.0 was the mirrored upstream image; tags are never overwritten)
 
 build() {   # build NAME TAG DOCKERFILE
     docker buildx build --platform "$PLATFORMS" -t "${DH_USER}/$1:$2" -t "${DH_USER}/$1:latest" -f "$3" . --push
@@ -22,8 +22,7 @@ case "$IMAGE" in
     nodemapper) build monero-stagenet-nodemapper "$VERSION" dockerfiles/nodemapper ;;
     tor)        build monero-stagenet-tor "$VERSION" dockerfiles/tor ;;
     i2p)        build monero-stagenet-i2p "$VERSION" dockerfiles/i2p ;;
-    explorer)   # network-agnostic upstream explorer, pinned under this namespace (both architectures copied as-is)
-                docker buildx imagetools create -t "${DH_USER}/monero-stagenet-explorer:${VERSION}" -t "${DH_USER}/monero-stagenet-explorer:latest" "$EXPLORER_UPSTREAM" ;;
+    explorer)   build monero-stagenet-explorer "$EXPLORER_VERSION" dockerfiles/explorer ;;
     all)        for i in monero exporter nodemapper tor i2p explorer; do "$0" "$i" "$DH_USER"; done ;;
     *)          echo "unknown image $IMAGE"; exit 2 ;;
 esac

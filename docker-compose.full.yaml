@@ -159,14 +159,15 @@ services:
     <<: *log-config
   explorer:
     container_name: stagenet_monerod_explorer
-    image: lord1egypt/monero-stagenet-explorer:1.0.0
+    image: lord1egypt/monero-stagenet-explorer:2.0.0
+    build:
+      context: .
+      dockerfile: dockerfiles/explorer
     restart: unless-stopped
     ports:
       - ${WEB_BIND:-127.0.0.1}:${EXPLORER_PORT:-8000}:8000
     environment:
-      NODE: http://monerod:38081
-      NOJS: ${EXPLORER_NOJS:-0}
-      THEME: ${EXPLORER_THEME:-light}
+      DAEMON: http://monerod:38081
     depends_on:
       monerod:
         condition: service_started

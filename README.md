@@ -26,7 +26,7 @@
 | **Grafana** | **Node Stats** dashboard | `grafana/grafana` |
 | **tor** | Relays your transactions over Tor, and serves the node as a hidden service | `lord1egypt/monero-stagenet-tor` |
 | **i2pd** | Relays your transactions over i2p | `lord1egypt/monero-stagenet-i2p` |
-| **explorer** | Web block explorer for your own node | `lord1egypt/monero-stagenet-explorer` |
+| **explorer** | Dark, mobile-friendly block explorer for your own node: one Python file, no external links or scripts | `lord1egypt/monero-stagenet-explorer` |
 
 Every image is **multi-arch (amd64 + arm64)**, so the same compose file runs on a PC, a Raspberry Pi, or an ARM phone running Linux.
 
@@ -108,10 +108,11 @@ This is a stagenet conversion of [lalanza808/docker-monero-node](https://github.
 - **Fix:** nodemapper crashed (`KeyError: 'white_list'`) on a fresh node with no confirmed peers yet, so Prometheus showed it down.
 - **Fix:** the exporter now always reaches the daemon on its container port. Before, changing `UNRESTRICTED_PORT` silently broke metrics.
 - **Faster sync:** the node keeps four well-connected public stagenet nodes as priority peers (`PRIORITY_NODES`). With ordinary peers the heavy blocks around height 1.58M synced at 0.23 blocks/s; with these, 1 to 126 blocks/s.
+- **Own explorer:** a lightweight dark explorer (overview, latest blocks, mempool, block and transaction pages, search) with no external links, scripts or trackers.
 - **Fix:** the Grafana peer map showed "API KEY REQUIRED" tiles because CARTO basemaps now need a key; the default map is OpenStreetMap (no key).
 - Images published as multi-arch `lord1egypt/monero-stagenet-*`; containers prefixed `stagenet_` so a mainnet stack can run next to it.
 
 ## 🙏 Credits and license
 
 Original project and Grafana dashboard by **[lalanza808](https://github.com/lalanza808)**, MIT license (kept in `LICENSE`).
-Explorer image: `lalanza808/moneroexplorer`, mirrored unchanged. Prometheus exporter: [cirocosta/monero-exporter](https://github.com/cirocosta/monero-exporter).
+Explorer: written for ThothOS (Python standard library only; replaced the upstream explorer in image 2.0.0). Prometheus exporter: [cirocosta/monero-exporter](https://github.com/cirocosta/monero-exporter).

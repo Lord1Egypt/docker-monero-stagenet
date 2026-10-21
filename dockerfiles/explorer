@@ -1,0 +1,8 @@
+# ThothOS stagenet explorer: one Python file, standard library only, no external links or scripts.
+FROM python:3.12-slim
+RUN useradd -r -u 1000 explorer
+COPY dockerfiles/explorer.py /app/explorer.py
+USER explorer
+ENV PORT=8000 DAEMON=http://monerod:38081
+EXPOSE 8000
+ENTRYPOINT ["python", "-u", "/app/explorer.py"]
