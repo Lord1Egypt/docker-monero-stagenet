@@ -21,7 +21,7 @@ app = Flask(__name__)
 
 
 NODE_HOST = env.get('NODE_HOST', 'monerod')
-NODE_PORT = env.get('NODE_PORT', 18083)
+NODE_PORT = env.get('NODE_PORT', 38081)
 
 
 def get_geoip(ip) -> Union[City, None]:
@@ -61,10 +61,10 @@ def nodes():
     peer_list = requests.get(f'http://{NODE_HOST}:{NODE_PORT}/get_peer_list').json()
     if not peer_list:
         return ""
-    for peer in peer_list['gray_list']:
+    for peer in peer_list.get('gray_list', []):   # monerod omits empty lists (fresh node)
         peer['status'] = 'gray'
         peers_found.append(peer)
-    for peer in peer_list['white_list']:
+    for peer in peer_list.get('white_list', []):   # monerod omits empty lists (fresh node)
         peer['status'] = 'white'
         peers_found.append(peer)
     for peer in peers_found:

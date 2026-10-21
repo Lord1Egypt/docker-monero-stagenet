@@ -35,7 +35,7 @@ ORPort 127.0.0.1:9001
 PublishServerDescriptor 0
 SOCKSPort 9051
 HiddenServiceDir /var/lib/tor/monero
-HiddenServicePort 18081
+HiddenServicePort 38089
 EOF
 systemctl enable tor
 systemctl restart tor
@@ -125,10 +125,10 @@ cat << EOF > /opt/monero/.env
 DATA_DIR=/opt/monero/data
 GRAFANA_URL=https://${DOMAIN}/grafana
 GF_SERVER_SERVE_FROM_SUB_PATH=true
-P2P_PORT=18080
-RESTRICTED_PORT=18081
-ZMQ_PORT=18082
-UNRESTRICTED_PORT=18083
+P2P_PORT=38080
+RESTRICTED_PORT=38089
+ZMQ_PORT=38082
+UNRESTRICTED_PORT=38081
 GF_AUTH_ANONYMOUS_ENABLED=true
 GF_AUTH_BASIC_ENABLED=true
 GF_AUTH_DISABLE_LOGIN_FORM=false
@@ -142,8 +142,8 @@ sudo -u monero bash -c "cd /opt/monero && make up"
 
 # Post nodes to monero.fail
 ONION_ADDR=$(cat /var/lib/tor/monero/hostname)
-ONION_URL="http://${ONION_ADDR}:18081"
-CLEAR_URL="http://$(hostname).${DOMAIN}:18081"
+ONION_URL="http://${ONION_ADDR}:38089"
+CLEAR_URL="http://$(hostname).${DOMAIN}:38089"
 
 curl -q -X POST https://monero.fail/add -d node_url="${ONION_URL}"
 curl -q -X POST https://monero.fail/add -d node_url="${CLEAR_URL}"

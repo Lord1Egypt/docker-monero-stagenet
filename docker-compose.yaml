@@ -24,7 +24,7 @@ services:
       - --config.file=/etc/prometheus/config.yaml
       - --storage.tsdb.path=/prometheus
       - --storage.tsdb.retention.time=${PROM_RETENTION:-360d}
-    container_name: monerod_prometheus
+    container_name: stagenet_monerod_prometheus
     restart: unless-stopped
     depends_on:
       exporter:
@@ -41,7 +41,7 @@ services:
     user: "1000"
     command:
       - -config=/etc/grafana/grafana.ini
-    container_name: monerod_grafana
+    container_name: stagenet_monerod_grafana
     restart: unless-stopped
     image: grafana/grafana:${GRAFANA_TAG:-10.1.4}
     ports:
@@ -68,8 +68,8 @@ services:
       - tor_net
     <<: *log-config
   exporter:
-    container_name: monerod_exporter
-    image: lalanza808/exporter:1.0.0
+    container_name: stagenet_monerod_exporter
+    image: lord1egypt/monero-stagenet-exporter:1.0.0
     build:
       context: .
       dockerfile: dockerfiles/exporter
@@ -80,13 +80,13 @@ services:
     # ports:
     #   - 127.0.0.1:9000:9000
     command:
-      - --monero-addr=http://monerod:${UNRESTRICTED_PORT:-18083}
+      - --monero-addr=http://monerod:38081   # container port; UNRESTRICTED_PORT only changes the host mapping
     networks:
       - tor_net
     <<: *log-config
   nodemapper:
-    container_name: monerod_nodemapper
-    image: lalanza808/nodemapper:1.0.4
+    container_name: stagenet_monerod_nodemapper
+    image: lord1egypt/monero-stagenet-nodemapper:1.0.0
     restart: unless-stopped
     build:
       context: .
@@ -96,15 +96,15 @@ services:
         condition: service_started
     environment:
       NODE_HOST: monerod
-      NODE_PORT: 18083
+      NODE_PORT: 38081
     # ports:
     #   - 127.0.0.1:${MAPPER_PORT:-5000}:5000
     networks:
       - tor_net
     <<: *log-config
   tor:
-    container_name: monerod_tor
-    image: lalanza808/tor:1.0.2
+    container_name: stagenet_monerod_tor
+    image: lord1egypt/monero-stagenet-tor:1.0.0
     build:
       context: .
       dockerfile: dockerfiles/tor
@@ -118,8 +118,8 @@ services:
         ipv4_address: 172.31.255.250
     <<: *log-config
   i2p:
-    container_name: monerod_i2p
-    image: lalanza808/i2p:1.0.0
+    container_name: stagenet_monerod_i2p
+    image: lord1egypt/monero-stagenet-i2p:1.0.0
     build:
       context: .
       dockerfile: dockerfiles/i2p
@@ -132,8 +132,8 @@ services:
         ipv4_address: 172.31.255.251
     <<: *log-config
   monerod:
-    container_name: monerod
-    image: lalanza808/monero:v0.18.5.3
+    container_name: stagenet_monerod
+    image: lord1egypt/monero-stagenet:v0.18.5.4
     build:
       context: .
       dockerfile: dockerfiles/monero
@@ -144,27 +144,27 @@ services:
       i2p:
         condition: service_started
     volumes:
-      - ${DATA_DIR:-./data}:/data
+      - ${DATA_DIR:-./data-stagenet}:/data
       - tor:/var/lib/tor:ro
     ports:
-      - ${P2P_PORT:-18080}:18080                    # p2p
-      - ${RESTRICTED_PORT:-18081}:18081             # restricted rpc
-      - 127.0.0.1:${ZMQ_PORT:-18082}:18082          # zmq
-      - 127.0.0.1:${UNRESTRICTED_PORT:-18083}:18083 # unrestricted rpc
-      - 127.0.0.1:${P2P_TOR:-18084}:18084           # tor anonymous-inbound
+      - ${P2P_PORT:-38080}:38080                    # p2p
+      - ${RESTRICTED_PORT:-38089}:38089             # restricted rpc
+      - 127.0.0.1:${ZMQ_PORT:-38082}:38082          # zmq
+      - 127.0.0.1:${UNRESTRICTED_PORT:-38081}:38081 # unrestricted rpc
+      - 127.0.0.1:${P2P_TOR:-38084}:38084           # tor anonymous-inbound
     networks:
       - tor_net
     command:
       - /entrypoint.sh
     <<: *log-config
   explorer:
-    container_name: monerod_explorer
-    image: lalanza808/moneroexplorer:v1.0.0
+    container_name: stagenet_monerod_explorer
+    image: lord1egypt/monero-stagenet-explorer:1.0.0
     restart: unless-stopped
     ports:
       - 127.0.0.1:${EXPLORER_PORT:-8000}:8000
     environment:
-      NODE: http://monerod:18083
+      NODE: http://monerod:38081
       NOJS: ${EXPLORER_NOJS:-0}
       THEME: ${EXPLORER_THEME:-light}
     depends_on:

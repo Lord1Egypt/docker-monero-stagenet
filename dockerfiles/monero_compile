@@ -34,7 +34,7 @@ COPY ./dockerfiles/files/monerod/ban_list.txt /ban_list.txt
 COPY ./dockerfiles/files/monerod/monerod_entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-EXPOSE 18080
-EXPOSE 18081
-EXPOSE 18082
-EXPOSE 18083
+EXPOSE 38080
+EXPOSE 38089
+EXPOSE 38082
+EXPOSE 38081

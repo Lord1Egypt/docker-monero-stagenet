@@ -1,130 +1,104 @@
-# docker-monero-node
+<h1 align="center">🧪 docker-monero-stagenet</h1>
 
-Simple way to run a Monero node with some monitoring and anonymity tools packaged in:
+<p align="center">
+  <b>A complete Monero <u>stagenet</u> node in one command, with monitoring, peer map, block explorer and private transaction relay over Tor and i2p.</b><br>
+  Stagenet coins have no value, so it's a safe place to learn, test wallets and apps, and try solo mining.
+</p>
 
-* [monero-exporter](https://github.com/cirocosta/monero-exporter) - exposes metrics of the daemon
-* [nodemapper](./dockerfiles/nodemapper.py) - gathers GeoIP data for peers
-* [Prometheus](https://prometheus.io/docs/introduction/overview/) - monitors the exporter
-* [Grafana](https://grafana.com/) - shows visualizations and dashboards
-* [tor](https://www.torproject.org/) - provides tx relays over tor proxy and hidden service
-* [i2pd](https://i2pd.website/) - provides tx relays over i2p proxy
-* [explorer](https://github.com/lalanza808/moneroexplorer) - block explorer
+<p align="center">
+  <img alt="Monero" src="https://img.shields.io/badge/Monero-v0.18.5.4-ff6600?logo=monero&logoColor=white">
+  <img alt="Network" src="https://img.shields.io/badge/network-stagenet-8250df">
+  <img alt="Arch" src="https://img.shields.io/badge/arch-amd64%20%7C%20arm64-1f6feb">
+  <img alt="Docker" src="https://img.shields.io/badge/Docker%20Hub-lord1egypt-2496ed?logo=docker&logoColor=white">
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-green">
+</p>
 
+---
 
-## Setup
+## ✨ What runs
 
-The only requirements are [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/). Ensure those are installed on your system. There's an optional `Makefile` provided if you'd like to use that, just ensure `make` is installed.
+| Service | What it does | Image |
+|---|---|---|
+| **monerod** | Monero **v0.18.5.4** daemon on `--stagenet`, binaries GPG-verified at build time | `lord1egypt/monero-stagenet` |
+| **exporter** | Exposes the daemon's metrics for Prometheus | `lord1egypt/monero-stagenet-exporter` |
+| **nodemapper** | Turns the peer list into GeoIP metrics (world map of peers) | `lord1egypt/monero-stagenet-nodemapper` |
+| **Prometheus** | Collects metrics from exporter and nodemapper | `prom/prometheus` |
+| **Grafana** | **Node Stats** dashboard | `grafana/grafana` |
+| **tor** | Relays your transactions over Tor, and serves the node as a hidden service | `lord1egypt/monero-stagenet-tor` |
+| **i2pd** | Relays your transactions over i2p | `lord1egypt/monero-stagenet-i2p` |
+| **explorer** | Web block explorer for your own node | `lord1egypt/monero-stagenet-explorer` |
 
-```
-# Clone and enter the repository
-git clone https://github.com/lalanza808/docker-monero-node
-cd docker-monero-node
+Every image is **multi-arch (amd64 + arm64)**, so the same compose file runs on a PC, a Raspberry Pi, or an ARM phone running Linux.
 
-# OPTIONAL: Setup Grafana password, blockchain storage location, or port and container image tag overrides
-cp env-example .env
-vim .env
-```
-
-There are 2 routes depending on your preference.
-
-### If you want to just pull the images (easier, faster)
-
-This is the default behavior intended for ease of use, gets things running faster. Upstream images are on dockerhub:
-
-* lalanza808/exporter:1.0.0
-* lalanza808/nodemapper:1.0.4
-* lalanza808/tor:1.0.2
-* lalanza808/i2p:1.0.0
-* lalanza808/monero:v0.18.5.3
+## 🚀 Quick start
 
 ```bash
-docker compose up -d
+git clone https://github.com/Lord1Egypt/docker-monero-stagenet.git
+cd docker-monero-stagenet
+cp env-example .env          # optional: change ports, data dir, Grafana login
+docker compose up -d         # pulls the prebuilt images
+docker compose logs -f monerod
 ```
 
-### If you want to build the images yourself
+Then open:
 
-Some people prefer to build things locally rather than assume the upstream is correct / not compromised (though you still assume base images are not compromised). You can review the Dockerfiles in [dockerfiles](./dockerfiles)
+| | URL |
+|---|---|
+| Grafana dashboard | http://localhost:3000 |
+| Block explorer | http://localhost:8000 |
+| Public (restricted) RPC for wallets | `http://<your-ip>:38089` |
+
+The first sync downloads the whole stagenet chain (about 2.2 million blocks). Speed depends mostly on CPU. The **Tor onion address** of your node is printed at the start of `docker compose logs monerod`.
+
+## 🔌 Ports (stagenet numbering)
+
+| Port | Use | Exposed |
+|---|---|---|
+| `38080` | P2P | public |
+| `38089` | Restricted RPC (safe for wallets: no mining or admin calls) | public |
+| `38081` | Full RPC (exporter, nodemapper, explorer, solo mining) | `127.0.0.1` only |
+| `38082` | ZMQ | `127.0.0.1` only |
+| `38084` | Tor anonymous inbound | `127.0.0.1` only |
+
+The full RPC can start mining and change the node's settings, so it is never published beyond this machine.
+
+## ⛏️ Solo mining to your stagenet address
+
+From the same machine:
+```bash
+curl -s http://127.0.0.1:38081/start_mining -d '{"miner_address":"5…your stagenet address…","threads_count":2,"do_background_mining":false,"ignore_battery":true}'
+curl -s http://127.0.0.1:38081/mining_status
+curl -s http://127.0.0.1:38081/stop_mining
+```
+Or point **XMRig** at it in solo mode: `xmrig --daemon -o 127.0.0.1:38081 -u 5…your address… --threads 2`.
+
+## 🔧 Configuration (`.env`)
+
+`DATA_DIR` (default `./data-stagenet`), `P2P_PORT`, `RESTRICTED_PORT`, `ZMQ_PORT`, `UNRESTRICTED_PORT`, `P2P_TOR`, `EXPLORER_PORT`, `GRAF_PORT`,
+`PROM_RETENTION`, `GF_*` (Grafana login). Change `GF_SECURITY_ADMIN_PASSWORD` before publishing Grafana beyond localhost.
+
+To reuse an already synced stagenet blockchain, point `DATA_DIR` at a **copy** of its folder: the one that contains `stagenet/lmdb`.
+
+## 🏗️ Build and publish the images yourself
 
 ```bash
-docker compose build
-docker compose up -d
+make build                       # build locally
+./release.sh all [dockerhub-user]   # multi-arch build + push (needs docker login and buildx)
 ```
 
-### Port Configurations
+`docker-compose.full.yaml` compiles monerod from source instead of using the official release binaries.
 
-The following ports will be bound for `monerod` by default, but you can override in `.env`:
-- 18080   # p2p
-- 18081   # restricted rpc
-- 18082   # zmq
-- 18083   # unrestricted rpc
-- 18084   # tor anonymous-inbound
+## 🔄 What changed from upstream
 
-The following ports are commented out but can be enabled to test things locally:
-- 9090  # prometheus web ui
-- 3000  # grafana web ui
-- 9000  # exporter web api (/metrics)
-- 5000  # nodemapper web api (/metrics)
-- 9050  # tor proxy
-- 4444  # i2p http proxy
-- 4447  # i2p socks proxy
+This is a stagenet conversion of [lalanza808/docker-monero-node](https://github.com/lalanza808/docker-monero-node) (mainnet):
 
-There are two hard-coded IP addresses for the tor and i2p proxies (monerod requires an IP address for setting the `--tx-proxy` flag.) You will need to modify your compose file if you need to adjust them.
+- `monerod --stagenet`, Monero **v0.18.5.4** with a fresh GPG-signed `hashes.txt` (binaryFate key `81AC 591F E9C4 B65C 5806 AFC3 F0AF 4D46 2A0B DF92`).
+- All ports moved to the stagenet scheme above, in the daemon, the compose files, the Tor hidden services and the tools.
+- **Fix:** nodemapper crashed (`KeyError: 'white_list'`) on a fresh node with no confirmed peers yet, so Prometheus showed it down.
+- **Fix:** the exporter now always reaches the daemon on its container port. Before, changing `UNRESTRICTED_PORT` silently broke metrics.
+- Images published as multi-arch `lord1egypt/monero-stagenet-*`; containers prefixed `stagenet_` so a mainnet stack can run next to it.
 
-You will want to open/allow ports 18080 and 18081 in your firewall for usage as a remote/public node (or whichever p2p and restricted ports you picked).
+## 🙏 Credits and license
 
-Also, you may want to setup a reverse proxy to Grafana if you would like to expose the visualizations for the world to see. Be sure to lock down the administrative settings or leave login disabled! You can see sample images below.
-
-### Onion Address
-
-Your `tor` container will be proxying outbound traffic (hiding transactions) and also allowing incoming connections to the Tor network (hidden service). A random onion address will be generated automatically. To view the address, either check the `monerod` container logs (it will be the first few lines), or read the file like so:
-
-```bash
-docker compose exec -ti tor cat /var/lib/tor/monerod/hostname
-```
-
-Load the URL in your Tor browser at port 18081 to confirm it's availability or for personal usage. http://<onion_address>:18081/get_info
-
-![](./static/tor.png)
-
-It may take a few minutes for it to be reachable. Check the tor container logs to monitor bootstrap progress.
-
-### Block Explorer
-
-* [lalanza808/moneroexplorer](https://github.com/lalanza808/moneroexplorer)
-* [lalanza808/moneroexplorer:v1.0.0](https://hub.docker.com/r/lalanza808/moneroexplorer)
-
-There is a built-in block explorer by default running on port 8000 (http://localhost:8000). Check [env-example](./env-example) to override these values.
-
-## Usage
-
-It's fairly simple, use `docker compose` to bring the containers up and down and look at logs.
-
-```
-# Run containers
-docker compose up -d            # make up
-
-# Check all logs
-docker compose logs -f
-
-# Check monerod logs
-docker compose logs -f monerod  # make logs
-```
-
-### Running Locally
-
-Navigate to http://localhost:3000 and find the `Node Stats` dashboard to get those sweet, sweet graphs.
-
-### Running on VPS
-
-If you've installed this on another system you will want to use [SSH tunnels](https://www.ssh.com/ssh/tunneling/example) (local forwarding) to reach Grafana if not running a reverse proxy:
-
-```
-ssh <VPS OR SERVER IP> -L 3000:localhost:3000
-```
-
-Then navigate to http://localhost:3000. Here is what the dashboard looks like:
-
-![](static/graf1.png)
-
-![](static/graf2.png)
-
+Original project and Grafana dashboard by **[lalanza808](https://github.com/lalanza808)**, MIT license (kept in `LICENSE`).
+Explorer image: `lalanza808/moneroexplorer`, mirrored unchanged. Prometheus exporter: [cirocosta/monero-exporter](https://github.com/cirocosta/monero-exporter).

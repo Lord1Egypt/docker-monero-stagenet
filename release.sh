@@ -1,71 +1,28 @@
 #!/usr/bin/env bash
+# Build and push the multi-arch (linux/amd64 + linux/arm64) stagenet images to Docker Hub.
+# Needs `docker login` and Buildx with QEMU for the foreign architecture.
+#   ./release.sh monero|exporter|nodemapper|tor|i2p|explorer|all [DOCKERHUB_USER]
+set -euo pipefail
 
-# Build and tag container images for each service based upon the passed argument.
-# This version builds multi-arch images (linux/amd64 and linux/arm64) using Docker Buildx.
-# Make sure you have set up buildx and QEMU emulation (if building on a different arch).
-#
-# Example usage:
-#   ./release.sh monero
-#   ./release.sh exporter
-#
+IMAGE=${1:?usage: ./release.sh monero|exporter|nodemapper|tor|i2p|explorer|all [user]}
+DH_USER=${2:-lord1egypt}
+PLATFORMS=linux/amd64,linux/arm64
+MONERO_VERSION=v0.18.5.4            # must match dockerfiles/files/monerod/hashes.txt (GPG-verified at build time)
+VERSION=1.0.0
+EXPLORER_UPSTREAM=lalanza808/moneroexplorer:v1.0.0
 
-set -ex
+build() {   # build NAME TAG DOCKERFILE
+    docker buildx build --platform "$PLATFORMS" -t "${DH_USER}/$1:$2" -t "${DH_USER}/$1:latest" -f "$3" . --push
+}
 
-IMAGE=${1}
-DH_USER=${2:-lalanza808}
-MONERO_VERSION=v0.18.5.3
-MONERO_BASE=${DH_USER}/monero
-EXPORTER_VERSION=1.0.0
-EXPORTER_BASE=${DH_USER}/exporter
-NODEMAPPER_VERSION=1.0.4
-NODEMAPPER_BASE=${DH_USER}/nodemapper
-TOR_VERSION=1.0.2
-TOR_BASE=${DH_USER}/tor
-I2P_VERSION=1.0.0
-I2P_BASE=${DH_USER}/i2p
-
-if [[ "${IMAGE}" == "nodemapper" ]]; then
-    echo -e "[+] Building nodemapper multi-arch (amd64 & arm64)"
-    docker buildx build --platform linux/amd64,linux/arm64 \
-        -t "${NODEMAPPER_BASE}:${NODEMAPPER_VERSION}" \
-        -t "${NODEMAPPER_BASE}:latest" \
-        -f dockerfiles/nodemapper . \
-        --push
-fi
-
-if [[ "${IMAGE}" == "exporter" ]]; then
-    echo -e "[+] Building exporter multi-arch (amd64 & arm64)"
-    docker buildx build --platform linux/amd64,linux/arm64 \
-        -t "${EXPORTER_BASE}:${EXPORTER_VERSION}" \
-        -t "${EXPORTER_BASE}:latest" \
-        -f dockerfiles/exporter . \
-        --push
-fi
-
-if [[ "${IMAGE}" == "monero" ]]; then
-    echo -e "[+] Building monero multi-arch (amd64 & arm64)"
-    docker buildx build --platform linux/amd64,linux/arm64 \
-        -t "${MONERO_BASE}:${MONERO_VERSION}" \
-        -t "${MONERO_BASE}:latest" \
-        -f dockerfiles/monero . \
-        --push
-fi
-
-if [[ "${IMAGE}" == "tor" ]]; then
-    echo -e "[+] Building tor multi-arch (amd64 & arm64)"
-    docker buildx build --platform linux/amd64,linux/arm64 \
-        -t "${TOR_BASE}:${TOR_VERSION}" \
-        -t "${TOR_BASE}:latest" \
-        -f dockerfiles/tor . \
-        --push
-fi
-
-if [[ "${IMAGE}" == "i2p" ]]; then
-    echo -e "[+] Building i2p multi-arch (amd64 & arm64)"
-    docker buildx build --platform linux/amd64,linux/arm64 \
-        -t "${I2P_BASE}:${I2P_VERSION}" \
-        -t "${I2P_BASE}:latest" \
-        -f dockerfiles/i2p . \
-        --push
-fi
-
+case "$IMAGE" in
+    monero)     build monero-stagenet "$MONERO_VERSION" dockerfiles/monero ;;
+    exporter)   build monero-stagenet-exporter "$VERSION" dockerfiles/exporter ;;
+    nodemapper) build monero-stagenet-nodemapper "$VERSION" dockerfiles/nodemapper ;;
+    tor)        build monero-stagenet-tor "$VERSION" dockerfiles/tor ;;
+    i2p)        build monero-stagenet-i2p "$VERSION" dockerfiles/i2p ;;
+    explorer)   # network-agnostic upstream explorer, pinned under this namespace (both architectures copied as-is)
+                docker buildx imagetools create -t "${DH_USER}/monero-stagenet-explorer:${VERSION}" -t "${DH_USER}/monero-stagenet-explorer:latest" "$EXPLORER_UPSTREAM" ;;
+    all)        for i in monero exporter nodemapper tor i2p explorer; do "$0" "$i" "$DH_USER"; done ;;
+    *)          echo "unknown image $IMAGE"; exit 2 ;;
+esac

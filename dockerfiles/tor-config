@@ -7,7 +7,7 @@ PublishServerDescriptor 0
 SOCKSPort 0.0.0.0:9050
 
 HiddenServiceDir /var/lib/tor/monerod-rpc
-HiddenServicePort 18081 monerod:18081
+HiddenServicePort 38089 monerod:38089
 
 HiddenServiceDir /var/lib/tor/monerod
-HiddenServicePort 18084 monerod:18084
+HiddenServicePort 38084 monerod:38084
