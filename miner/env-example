@@ -1,7 +1,7 @@
 # Your stagenet wallet address (starts with 5)
 WALLET=
-# Your node's RPC address as host:port (must allow get_block_template / submit_block)
-NODE=<node-ip>:38081
+# Your node's RPC as host:port. The public restricted RPC (38089) is enough: it allows get_block_template and submit_block
+NODE=<node-ip>:38089
 # CPU threads (and the CPU cap of the container)
 THREADS=2
 # Stop automatically after this many hours (0 = run until ./mine.sh stop)

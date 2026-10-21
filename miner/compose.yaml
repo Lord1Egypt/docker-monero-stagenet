@@ -13,7 +13,7 @@ services:
     command:
       - --daemon                      # solo mining: block templates come straight from your node
       - --coin=monero
-      - --url=${NODE:?set NODE in .env, e.g. <node-ip>:38081}
+      - --url=${NODE:?set NODE in .env, e.g. <node-ip>:38089}
       - --user=${WALLET:?set WALLET in .env (your stagenet address, starts with 5)}
       - --threads=${THREADS:-2}
       - --cpu-priority=1              # low priority: everything else on the laptop comes first
