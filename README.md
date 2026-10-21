@@ -19,7 +19,7 @@
 
 | Service | What it does | Image |
 |---|---|---|
-| **monerod** | Monero **v0.18.5.4** daemon on `--stagenet`, binaries GPG-verified at build time | `lord1egypt/monero-stagenet` |
+| **monerod** | Monero **v0.18.5.4** daemon on `--stagenet`, binaries GPG-verified at build time | `lord1egypt/monero-stagenet` (image `v0.18.5.4-1`) |
 | **exporter** | Exposes the daemon's metrics for Prometheus | `lord1egypt/monero-stagenet-exporter` |
 | **nodemapper** | Turns the peer list into GeoIP metrics (world map of peers) | `lord1egypt/monero-stagenet-nodemapper` |
 | **Prometheus** | Collects metrics from exporter and nodemapper | `prom/prometheus` |
@@ -72,9 +72,20 @@ curl -s http://127.0.0.1:38081/stop_mining
 ```
 Or point **XMRig** at it in solo mode: `xmrig --daemon -o 127.0.0.1:38081 -u 5…your address… --threads 2`.
 
+## ⛏️ Mine from another PC (`miner/`)
+
+XMRig **v6.26.0** (GPG-verified release) in Docker, CPU only, capped at 2 threads, stops by itself after `MINE_HOURS` (default 6):
+```bash
+cd miner && cp env-example .env      # set WALLET (your 5… address) and NODE (host:port of your node's RPC)
+./mine.sh start          # or: ./mine.sh start 3   (hours; 0 = until stopped)
+./mine.sh status         # hashrate, accepted blocks
+./mine.sh stop
+```
+Image: `lord1egypt/monero-stagenet-xmrig:6.26.0` (amd64). Inside Docker on WSL, XMRig reports "msr kernel module is not available" and huge pages 0%: it mines without those tweaks (roughly 20-40% slower) rather than needing privileged access.
+
 ## 🔧 Configuration (`.env`)
 
-`DATA_DIR` (default `./data-stagenet`), `P2P_PORT`, `RESTRICTED_PORT`, `ZMQ_PORT`, `UNRESTRICTED_PORT`, `P2P_TOR`, `EXPLORER_PORT`, `GRAF_PORT`,
+`DATA_DIR` (default `./data-stagenet`), `PRIORITY_NODES`, `WEB_BIND`, `P2P_PORT`, `RESTRICTED_PORT`, `ZMQ_PORT`, `UNRESTRICTED_PORT`, `P2P_TOR`, `EXPLORER_PORT`, `GRAF_PORT`,
 `PROM_RETENTION`, `GF_*` (Grafana login). Change `GF_SECURITY_ADMIN_PASSWORD` before publishing Grafana beyond localhost.
 
 To reuse an already synced stagenet blockchain, point `DATA_DIR` at a **copy** of its folder: the one that contains `stagenet/lmdb`.
@@ -96,6 +107,7 @@ This is a stagenet conversion of [lalanza808/docker-monero-node](https://github.
 - All ports moved to the stagenet scheme above, in the daemon, the compose files, the Tor hidden services and the tools.
 - **Fix:** nodemapper crashed (`KeyError: 'white_list'`) on a fresh node with no confirmed peers yet, so Prometheus showed it down.
 - **Fix:** the exporter now always reaches the daemon on its container port. Before, changing `UNRESTRICTED_PORT` silently broke metrics.
+- **Faster sync:** the node keeps four well-connected public stagenet nodes as priority peers (`PRIORITY_NODES`). With ordinary peers the heavy blocks around height 1.58M synced at 0.23 blocks/s; with these, 1 to 126 blocks/s.
 - **Fix:** the Grafana peer map showed "API KEY REQUIRED" tiles because CARTO basemaps now need a key; the default map is OpenStreetMap (no key).
 - Images published as multi-arch `lord1egypt/monero-stagenet-*`; containers prefixed `stagenet_` so a mainnet stack can run next to it.
 

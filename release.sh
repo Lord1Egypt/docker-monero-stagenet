@@ -8,6 +8,7 @@ IMAGE=${1:?usage: ./release.sh monero|exporter|nodemapper|tor|i2p|explorer|all [
 DH_USER=${2:-lord1egypt}
 PLATFORMS=linux/amd64,linux/arm64
 MONERO_VERSION=v0.18.5.4            # must match dockerfiles/files/monerod/hashes.txt (GPG-verified at build time)
+MONERO_IMAGE_REV=1                   # bump when the image changes but Monero does not (published tags are never overwritten)
 VERSION=1.0.0
 EXPLORER_UPSTREAM=lalanza808/moneroexplorer:v1.0.0
 
@@ -16,7 +17,7 @@ build() {   # build NAME TAG DOCKERFILE
 }
 
 case "$IMAGE" in
-    monero)     build monero-stagenet "$MONERO_VERSION" dockerfiles/monero ;;
+    monero)     build monero-stagenet "${MONERO_VERSION}-${MONERO_IMAGE_REV}" dockerfiles/monero ;;
     exporter)   build monero-stagenet-exporter "$VERSION" dockerfiles/exporter ;;
     nodemapper) build monero-stagenet-nodemapper "$VERSION" dockerfiles/nodemapper ;;
     tor)        build monero-stagenet-tor "$VERSION" dockerfiles/tor ;;

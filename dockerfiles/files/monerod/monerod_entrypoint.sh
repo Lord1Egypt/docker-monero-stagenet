@@ -31,6 +31,15 @@ echo "=========================================="
 
 sleep 3
 
+# Well-connected public stagenet nodes kept as permanent peers. With ordinary peers the sync crawled through the heavy
+# blocks around height 1.58M (0.23 blocks/s); with these it ran at 1-126 blocks/s. PRIORITY_NODES overrides the list
+# (space-separated host:port); "none" disables it.
+PRIORITY_NODES=${PRIORITY_NODES:-"node.sethforprivacy.com:38080 node.monerodevs.org:38080 node2.monerodevs.org:38080 stagenet.xmr-tw.org:38080"}
+priority=()
+if [ "${PRIORITY_NODES}" != "none" ]; then
+    for n in ${PRIORITY_NODES}; do priority+=("--add-priority-node=${n}"); done
+fi
+
 monerod \
     --stagenet \
     --data-dir=/data \
@@ -51,4 +60,5 @@ monerod \
     --ban-list=/ban_list.txt \
     --anonymous-inbound=${P2P_ONION_ADDRESS}:38084,0.0.0.0:38084,24 \
     --tx-proxy=tor,172.31.255.250:9050,disable_noise,24 \
-    --tx-proxy=i2p,172.31.255.251:4447,disable_noise,24
+    --tx-proxy=i2p,172.31.255.251:4447,disable_noise,24 \
+    "${priority[@]}"

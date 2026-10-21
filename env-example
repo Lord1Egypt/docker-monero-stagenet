@@ -20,3 +20,7 @@ GF_SECURITY_ADMIN_USER=admin
 GF_INSTALL_PLUGINS=
 GF_SERVER_SERVE_FROM_SUB_PATH=false
 MONERO_RELEASE=v0.18.5.4
+# Space-separated host:port peers kept connected (empty = built-in fast stagenet nodes, "none" = disable)
+PRIORITY_NODES=
+# Where Grafana and the explorer listen: 127.0.0.1 (this machine only) or 0.0.0.0 (your network; set a Grafana password first)
+WEB_BIND=127.0.0.1

@@ -1,0 +1,21 @@
+# Solo-mine Monero STAGENET on this PC/laptop against your own node (CPU only, gentle by default).
+#   cp env-example .env   then set WALLET and NODE
+#   ./mine.sh start [hours]   ./mine.sh status   ./mine.sh stop
+name: stagenet-miner
+services:
+  xmrig:
+    build: .
+    image: lord1egypt/monero-stagenet-xmrig:6.26.0
+    restart: "no"                     # stops after MINE_HOURS; start it again tomorrow
+    cpus: ${THREADS:-2}               # hard cap: the laptop stays usable
+    environment:
+      MINE_HOURS: ${MINE_HOURS:-6}
+    command:
+      - --daemon                      # solo mining: block templates come straight from your node
+      - --coin=monero
+      - --url=${NODE:?set NODE in .env, e.g. <node-ip>:38081}
+      - --user=${WALLET:?set WALLET in .env (your stagenet address, starts with 5)}
+      - --threads=${THREADS:-2}
+      - --cpu-priority=1              # low priority: everything else on the laptop comes first
+      - --print-time=60
+      - --no-color

@@ -45,7 +45,7 @@ services:
     restart: unless-stopped
     image: grafana/grafana:${GRAFANA_TAG:-10.1.4}
     ports:
-      - 127.0.0.1:${GRAF_PORT:-3000}:3000
+      - ${WEB_BIND:-127.0.0.1}:${GRAF_PORT:-3000}:3000
     volumes:
       - grafana:/var/lib/grafana
       - ./files/grafana/grafana.ini:/etc/grafana/grafana.ini:ro
@@ -152,6 +152,8 @@ services:
       - 127.0.0.1:${P2P_TOR:-38084}:38084           # tor anonymous-inbound
     networks:
       - tor_net
+    environment:
+      PRIORITY_NODES: ${PRIORITY_NODES:-}
     command:
       - /entrypoint.sh
     <<: *log-config
@@ -160,7 +162,7 @@ services:
     image: lord1egypt/monero-stagenet-explorer:1.0.0
     restart: unless-stopped
     ports:
-      - 127.0.0.1:${EXPLORER_PORT:-8000}:8000
+      - ${WEB_BIND:-127.0.0.1}:${EXPLORER_PORT:-8000}:8000
     environment:
       NODE: http://monerod:38081
       NOJS: ${EXPLORER_NOJS:-0}
